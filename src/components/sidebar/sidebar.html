@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" href="./sidebar.css">
+</head>
+
+<body>
+  <div id="sidebar">
+    <div>
+      <input type="text" id="urlBar" placeholder="Enter URL" onkeyup="navigate(event)">
+    </div>
+    <div>
+      <button id="newTab" onclick="createTab()">New Tab</button>
+    </div>
+    <div id="tabList"></div>
+  </div>
+</body>
+<script>
+  function navigate(e) {
+    if (e.key === 'Enter') {
+      const url = document.getElementById('urlBar').value;
+      if (url.length > 0) {
+        if (url.startsWith('http')) {
+          window.electronAPI.navigate(url);
+        } else {
+          window.electronAPI.navigate('https://' + url);
+        }
+      }
+    }
+  }
+
+  function createTab() {
+    console.log('createTab button clicked')
+    window.electronAPI.createTab('https://www.google.com');
+  }
+
+  // In your sidebar JavaScript
+  window.electronAPI.onUpdateTabs((event, { tabs, activeTabId }) => {
+    console.log('Received updated tabs:', tabs);
+    console.log('Active tab ID:', activeTabId);
+    // Update your sidebar UI with the new tab information
+    updateTabsUI(tabs, activeTabId);
+  });
+
+  function updateTabsUI(tabs, activeTabId) {
+    // Clear existing tabs
+    const tabList = document.getElementById('tabList');
+    tabList.innerHTML = '';
+
+    console.log(tabs)
+    // Add new tabs
+    tabs.forEach(tab => {
+      const tabElement = document.createElement('div');
+      tabElement.textContent = tab.url;
+      tabElement.onclick = () => window.electronAPI.switchTab(tab.id);
+      if (tab.id === activeTabId) {
+        tabElement.classList.add('active');
+      }
+      tabList.appendChild(tabElement);
+    });
+
+    // set correct url bar value
+    document.getElementById('urlBar').value = tabs[activeTabId].url;
+  }
+
+  window.electronAPI.switchTab(tabId);
+</script>
+
+</html>

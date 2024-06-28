@@ -1,0 +1,42 @@
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  margin: auto;
+  padding: 10px 2rem;
+  background-color: #222;
+  /* border: 1px solid pink; */
+  display: flex;
+  gap: 1rem;
+}
+
+input[type='text'] {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  font-size: 1rem;
+  color: #ddd;
+  padding: 0.5rem;
+}
+
+input[type='text']:focus {
+  outline: none;
+  border-bottom: 1px solid cyan;
+}
+
+button {
+  background-color: transparent;
+  border: none;
+  font-size: 1rem;
+  color: #ddd;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+button:hover {
+  border: 1px solid cyan;
+  color: cyan;
+  cursor: pointer;
+}
