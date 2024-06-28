@@ -1,2 +1,2 @@
 # Vortex-Browser
-A web-browser built using Tauri and ReactJS
+A web-browser built using Electron JS
