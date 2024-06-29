@@ -7,8 +7,9 @@
 
 <body>
   <div id="sidebar">
+    <div class="tip"> Press <span>CMD + .</span> to toggle sidebar </div>
     <div>
-      <input type="text" id="urlBar" placeholder="Enter URL" onkeyup="navigate(event)">
+      <input autofocus type="text" id="urlBar" placeholder="Enter URL" onkeyup="navigate(event)">
     </div>
     <div>
       <button id="newTab" onclick="createTab()">New Tab</button>
@@ -48,15 +49,22 @@
     const tabList = document.getElementById('tabList');
     tabList.innerHTML = '';
 
-    console.log(tabs)
     // Add new tabs
     tabs.forEach(tab => {
       const tabElement = document.createElement('div');
-      tabElement.textContent = tab.url;
+      tabElement.textContent = tab.url.substring(0, 30);
       tabElement.onclick = () => window.electronAPI.switchTab(tab.id);
       if (tab.id === activeTabId) {
         tabElement.classList.add('active');
       }
+      // // let deleteBtn = document.createElement('button').textContent = 'X';
+      // // deleteBtn.onclick = () => window.electronAPI.closeTab(tab.id);
+      // // tabElement.appendChild(deleteBtn);
+      // tabElement.innerHTML += `<button onclick="closeTab(${event},${tab.id})">X</button>`;
+      let deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'X';
+      deleteBtn.onclick = (event) => closeTab(event,tab.id);
+      tabElement.appendChild(deleteBtn);
       tabList.appendChild(tabElement);
     });
 
@@ -64,7 +72,22 @@
     document.getElementById('urlBar').value = tabs[activeTabId].url;
   }
 
-  window.electronAPI.switchTab(tabId);
+  // window.electronAPI.switchTab(tabId);
+
+  // check if page is navigated
+  window.electronAPI.onPageNavigated((event, url) => {
+    console.log('Page navigated to:', url);
+  });
+
+  function closeTab(event,id) {
+    console.log('closig :',event);
+    event.stopPropagation();
+    console.log('closeTab', id);
+    window.electronAPI.closeTab(id);
+  }
+  window.addEventListener('keyup', (event) => {
+    console.log('keyup', event.key)
+  })
 </script>
 
 </html>
