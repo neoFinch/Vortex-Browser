@@ -6,5 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   navigate: (url) => ipcRenderer.send('navigate', url),
   onUpdateTabs: (callback) => ipcRenderer.on('update-tabs', callback),
   onPageNavigated: (callback) => ipcRenderer.on('page-navigated', callback),
-  closeTab: (id) => ipcRenderer.send('close-tab', id)
+  closeTab: (id) => ipcRenderer.send('close-tab', id),
+  goBack: () => ipcRenderer.send('go-back'),
+  goForward: () => ipcRenderer.send('go-forward'),
 }) 

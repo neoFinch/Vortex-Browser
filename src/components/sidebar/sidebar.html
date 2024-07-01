@@ -8,8 +8,10 @@
 <body>
   <div id="sidebar">
     <div class="tip"> Press <span>CMD + .</span> to toggle sidebar </div>
-    <div>
+    <div class="urlBar-wrapper">
+      <button onclick="goBack()"> <img class="deg-180" src="../../assets/forward.svg" alt="back"></button>
       <input autofocus type="text" id="urlBar" placeholder="Enter URL" onkeyup="navigate(event)">
+      <button onclick="goForward()"> <img src="../../assets/forward.svg" alt="forward"> </button>
     </div>
     <div>
       <button id="newTab" onclick="createTab()">New Tab</button>
@@ -32,14 +34,11 @@
   }
 
   function createTab() {
-    console.log('createTab button clicked')
     window.electronAPI.createTab('https://www.google.com');
   }
 
   // In your sidebar JavaScript
   window.electronAPI.onUpdateTabs((event, { tabs, activeTabId }) => {
-    console.log('Received updated tabs:', tabs);
-    console.log('Active tab ID:', activeTabId);
     // Update your sidebar UI with the new tab information
     updateTabsUI(tabs, activeTabId);
   });
@@ -52,15 +51,12 @@
     // Add new tabs
     tabs.forEach(tab => {
       const tabElement = document.createElement('div');
-      tabElement.textContent = tab.url.substring(0, 30);
+      tabElement.textContent = tab.title;
       tabElement.onclick = () => window.electronAPI.switchTab(tab.id);
       if (tab.id === activeTabId) {
         tabElement.classList.add('active');
       }
-      // // let deleteBtn = document.createElement('button').textContent = 'X';
-      // // deleteBtn.onclick = () => window.electronAPI.closeTab(tab.id);
-      // // tabElement.appendChild(deleteBtn);
-      // tabElement.innerHTML += `<button onclick="closeTab(${event},${tab.id})">X</button>`;
+
       let deleteBtn = document.createElement('button');
       deleteBtn.textContent = 'X';
       deleteBtn.onclick = (event) => closeTab(event,tab.id);
@@ -72,22 +68,18 @@
     document.getElementById('urlBar').value = tabs[activeTabId].url;
   }
 
-  // window.electronAPI.switchTab(tabId);
-
-  // check if page is navigated
-  window.electronAPI.onPageNavigated((event, url) => {
-    console.log('Page navigated to:', url);
-  });
-
   function closeTab(event,id) {
-    console.log('closig :',event);
     event.stopPropagation();
-    console.log('closeTab', id);
     window.electronAPI.closeTab(id);
   }
-  window.addEventListener('keyup', (event) => {
-    console.log('keyup', event.key)
-  })
-</script>
 
+  function goBack() {
+    window.electronAPI.goBack();
+  }
+
+  function goForward() {
+    window.electronAPI.goForward();
+  }
+  
+</script>
 </html>

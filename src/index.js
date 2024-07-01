@@ -1,12 +1,16 @@
 const { BaseWindow, WebContentsView, app, ipcMain, globalShortcut } = require("electron");
+const {debounce}  = require('./backend/helper');
 
 if (process.env.NODE_ENV !== 'production') {
   app.commandLine.appendSwitch('js-flags', '--expose-gc');
 }
 
 const path = require("path");
+const { url } = require("inspector");
 let win;
-let mainView, sidebar;
+let sidebar;
+let urlDialog;
+let isUrlDialogVisible = false;
 
 let tabs = [];
 let viewMap = new Map();
@@ -24,10 +28,27 @@ function createWindow() {
     titleBarStyle: "default",
   });
 
+  // win.setVibrancy('tit')
+  urlDialog = new WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+    },
+  });
+
+  // urlDialog.setBounds({ x: 300, y: 50, width: 600, height: 300, }); 
+  // ceneter the dialog
+  urlDialog.setBounds({
+    x: currentBounds.width / 2 - 300,
+    y: currentBounds.height / 2 - 150,
+    width: 600,
+    height: 300,
+  });
+  urlDialog.webContents.loadFile( path.join(__dirname, "components", "url-dialog", "url-dialog.html") );
   
+  urlDialog.setVisible(false);
+  win.contentView.addChildView(urlDialog);
   
   const debouncedResizeViews = debounce(resizeViews, 200);
-
   win.on("resize", debouncedResizeViews);
 
   sidebar = new WebContentsView({
@@ -35,6 +56,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
     },
   });
+
   win.contentView.addChildView(sidebar);
   sidebar.webContents.loadFile(
     path.join(__dirname, "components", "sidebar", "sidebar.html")
@@ -64,18 +86,6 @@ function resizeViews() {
 
   currentBounds.width = contnetSize[0];
   currentBounds.height = contnetSize[1];
-
-  // viewMap.forEach((view, key) => {
-  //   console.log({ key: view.getBounds() });
-  //   view.setBounds({
-  //     x: 300,
-  //     y: 0,
-  //     width: contnetSize[0] - 300,
-  //     height: contnetSize[1],
-  //   });
-  // });
-  currentBounds.width = contnetSize[0];
-  currentBounds.height = contnetSize[1];
 }
 
 app.whenReady().then(() => {
@@ -103,6 +113,19 @@ app.whenReady().then(() => {
       });
     }
   });
+
+  globalShortcut.register("CommandOrControl+t", () => {
+    console.log('open dialog to create new tab');
+    if (isUrlDialogVisible === true) {
+      urlDialog.setVisible(false);
+      isUrlDialogVisible = false;
+    } else {
+      urlDialog.setVisible(true);
+      isUrlDialogVisible = true;
+    }
+  
+  })
+
   createWindow();
 });
 
@@ -158,26 +181,25 @@ class TabManager {
     this.tabs.push(newTab);
     this.activeTabId = tabId;
     this.updateTabs();
+
     view.webContents.on("did-navigate", (event, url) => {
       console.log("did-navigate", url);
       this.tabs[tabId].url = url;
       this.updateTabs();
     });
-    
-    view.webContents.on('render-process-gone', () => {
-      console.log('🖐  render-process-gone', tabId);
+
+    view.webContents.on('did-finish-load', () => {
+      view.webContents.executeJavaScript('document.title').then(title => {
+        console.log('Page Title:', title);
+        this.tabs[tabId].title = title;
+        this.updateTabs();
+      });
 
     })
 
-    view.webContents.on('unresponsive', () => {
-      console.log('🚁 🚁 🚁 🚁  unresponsive', tabId);
-      // this.closeTab(tabId);
-    });
     view.webContents.on('destroyed', () => {
       console.log('🚁 🚁 🚁 🚁  destroyed', tabId);
-      // this.closeTab(tabId);
       console.log('🤬 removing child view');
-      
     });
     return tabId;
   }
@@ -272,34 +294,17 @@ ipcMain.on("switch-tab", (event, id) => {
 ipcMain.on("navigate", (event, url) => {
   tabManager.navigate(tabManager.activeTabId, url, false);
 });
-
-ipcMain.on("page-navigated", (event, url) => {
-  console.log({ event, url });
-  // tabManager.navigate(tabManager.activeTabId, url, false);
-});
  
 ipcMain.on("close-tab", (event, id) => {
   tabManager.closeTab(id);
 });
 
-// win.
+ipcMain.on('go-back', (event) => {
+  console.log('go-back');
+  tabManager.viewMap.get(tabManager.activeTabId)?.webContents?.goBack();
+})
 
-// mainView?.webContents.on("page-title-updated", (event, title) => {
-//   tabManager.updateTabTitle(tabManager.activeTabId, title);
-// });
-
-// mainView?.webContents.on("did-navigate", (event, url) => {
-//   tabManager.navigate(tabManager.activeTabId, url, false);
-// });
-
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
+ipcMain.on('go-forward', (event) => {
+  console.log('go-forward');
+  tabManager.viewMap.get(tabManager.activeTabId)?.webContents?.goForward();
+})
