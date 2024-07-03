@@ -1,5 +1,5 @@
 :root {
-  --color-background: #01012b;
+  --color-background: #01012b88;
   --color-sidebar: rgba(38, 38, 55, 0.7);
   --color-active-tab: #ff2a6d;
   --color-inactive-tab: #05d9e8;
@@ -21,15 +21,16 @@ body {
   height: 100vh;
   background-color: var(--color-sidebar);
   backdrop-filter: blur(10px);
-  background-image: url('../../assets/sidebar-3.webp');
+  background-image: url('../../assets/sidebar-27.jpg');
   background-size: cover;
   background-repeat: no-repeat;
+  background-position: 60% 0px;
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 2px;
   overflow-x: hidden;
   overflow-y: hidden;
-  flex-wrap: wrap
+  flex-wrap: nowrap
 }
 
 #sidebar .tip {
@@ -42,6 +43,37 @@ body {
   padding: 5px;
 }
 
+.urlBar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.urlBar-wrapper>button {
+  background-color: #FFFFFFAA;
+  border: none;
+  outline: none;
+  width: 30px;
+  height: 30px; 
+  border-radius: 50%;
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-items: center;
+  cursor: pointer;
+}
+
+.urlBar-wrapper>button>img {
+  color: #fff;
+  width: 20px;
+  height: 20px;
+}
+
+.deg-180 {
+  transform: rotate(180deg);
+}
+
+
 #urlBar {
   background-color: #00567855;
   border: 1px solid #05d9e8;
@@ -51,6 +83,10 @@ body {
   padding: 10px;
   outline: none;
   color: #fff;
+}
+
+#urlBar:focus {
+  border: 2px solid gold;
 }
 
 button#newTab {
@@ -76,6 +112,11 @@ button#newTab:hover {
   width: 10px;
 }
 
+#tabList {
+  height: 80vh;
+  overflow-y: scroll;
+
+}
 #tabList>div {
   /* background-color: var(--color-inactive-tab); */
   background-color: #FFFFFF22;
@@ -99,13 +140,19 @@ button#newTab:hover {
 #tabList>div>button {
   background-color: transparent;
   backdrop-filter: blur(5px);
-  color: red;
+  background-color: red;
+  color: #fff;
   border: none;
   outline: none;
   border-radius: 5px;
   cursor: crosshair;
+  display: none;
+  font-size: 0.5rem;
 }
 
+#tabList>div:hover button {
+  display: block;
+}
 #tabList>div:hover {
   background-color: rgba(0, 255, 255, 0.5);
 }
