@@ -9,7 +9,7 @@ MacOS
 2. Navigate back and forward
 3. Toggle Sidebar
 4. Resize the window
-5. All well-known shortcuts for creating a new tab, and deleting a tab [CMD + T, CMD + W].
+5. Shortcuts for creating a new tab, and deleting a tab [CMD + T, CMD + W].
 
 ## Features not implemented
 1. Ability to access developer tools
