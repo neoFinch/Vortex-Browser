@@ -85,6 +85,10 @@ body {
   color: #fff;
 }
 
+#urlBar:focus {
+  border: 2px solid gold;
+}
+
 button#newTab {
   background-color: #005678AA;
   border: none;

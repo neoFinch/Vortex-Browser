@@ -62,10 +62,13 @@
       deleteBtn.onclick = (event) => closeTab(event,tab.id);
       tabElement.appendChild(deleteBtn);
       tabList.appendChild(tabElement);
+      if (tab.id === activeTabId) {
+        document.getElementById('urlBar').value = tab.url;
+      }
     });
 
     // set correct url bar value
-    document.getElementById('urlBar').value = tabs[activeTabId].url;
+    // document.getElementById('urlBar').value = tabs[activeTabId].url;
   }
 
   function closeTab(event,id) {
@@ -80,6 +83,11 @@
   function goForward() {
     window.electronAPI.goForward();
   }
+
+  window.electronAPI.focusUrlBar((event, url) => {
+    console.log('focus called')
+    document.getElementById('urlBar').focus()
+  })
   
 </script>
 </html>
