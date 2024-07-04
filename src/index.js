@@ -6,11 +6,10 @@ const {
   MenuItem,
   Menu,
 } = require("electron");
+const path = require("path");
 const { debounce } = require("./backend/helper");
 const TabManager = require("./backend/TabManager");
 
-const path = require("path");
-const { url } = require("inspector");
 
 let win;
 let sidebar;
@@ -37,6 +36,7 @@ function createWindow() {
     transparent: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+      partition: "persist:browser-session",
     },
   })
 
@@ -53,6 +53,7 @@ function createWindow() {
   sidebar = new WebContentsView({
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+      partition: "persist:browser-session",
     },
   });
 
@@ -123,6 +124,30 @@ function createWindow() {
           label: "Delete Tab",
           click: () => {
             tabManager.closeTab(tabManager.activeTabId);
+          },
+        },
+        {
+          role: "reloadTab",
+          accelerator: "CommandOrControl+r",
+          label: "Reload Tab",
+          click: () => {
+            tabManager.viewMap.get(tabManager.activeTabId)?.webContents?.reload();
+          },
+        },
+      ],
+    })
+  );
+
+  menu.append(
+    new MenuItem({
+      label: "Developer",
+      submenu: [
+        {
+          role: "Open DevTools",
+          accelerator: "CommandOrControl+Option+i",
+          label: "Open DevTools",
+          click: () => {
+            tabManager.viewMap.get(tabManager.activeTabId)?.webContents?.openDevTools();
           },
         },
       ],
