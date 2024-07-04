@@ -10,11 +10,13 @@ MacOS
 3. Toggle Sidebar
 4. Resize the window
 5. Shortcuts for creating a new tab, and deleting a tab [CMD + T, CMD + W].
+6. Reload Tab functionality
+7. Ability to access Developer Tools
+
 
 ## Features not implemented
-1. Ability to access developer tools
-2. Restore a deleted tab using [CMD + SHIFT + T]
-3. Search in a web page using [CMD + F]
+1. Restore a deleted tab using [CMD + SHIFT + T]
+2. Search in a web page using [CMD + F]
 
 
 ## How it looks
