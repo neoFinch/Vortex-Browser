@@ -1,6 +1,6 @@
-const { WebContentsView } = require("electron");
-const { url } = require("inspector");
+const { WebContentsView, session } = require("electron");
 const path = require("path");
+const { verifySessionStorage } = require("./helper");
 
 class TabManager {
   constructor(currentBounds, win = null, ) {
@@ -10,10 +10,12 @@ class TabManager {
     this.win = win;
     this.currentBounds = currentBounds;
     this.sidebar = null;
+    this.persistentSession = null;
   }
 
   setWin(win) {
     this.win = win;
+    this.persistentSession = session.fromPartition('persist:browser-session');
   }
 
   setSidebar(sidebar) {
@@ -45,6 +47,14 @@ class TabManager {
       width: this.currentBounds.width - 300,
       height: this.currentBounds.height,
     });
+
+    newView.webContents.on('login', async (event, details, authInfo, callback) => {
+      event.preventDefault();
+      console.log({event, details, authInfo, callback})
+      
+    });
+
+
     return newView;
   }
 
@@ -58,16 +68,12 @@ class TabManager {
     this.updateTabs();
 
     view.webContents.on("did-navigate", (event, url) => {
-      console.log({url})
-      // this.tabs[tabId].url = url;
-      // let selectedTab = this.tabs.filter(tab => tab.id === tabId)[0];
-      // console.log(first)
-      // selectedTab.url = url;
-      // this.updateTabs();
+      
       this.tabs.forEach(tab => {
         if (tab.id === tabId) {
           tab.url = url;
           this.updateTabs();
+          this.persistCookiesForUrl(url);
         }
       })
     });
@@ -204,6 +210,51 @@ class TabManager {
         });
       });
     }
+  }
+
+  persistCookiesForUrl(url) {
+    if (!url) {
+      console.error('No URL provided for cookie persistence');
+      return;
+    }
+  
+    const parsedUrl = new URL(url);
+  
+    this.persistentSession.cookies.get({ url })
+      .then(cookies => {
+        cookies.forEach(cookie => {
+          const { name, value, domain, path, secure, httpOnly, expirationDate } = cookie;
+          
+          // Check if the cookie's domain is a subdomain of the current URL
+          if (!domain || !parsedUrl.hostname.endsWith(domain.startsWith('.') ? domain : `.${domain}`)) {
+            console.warn(`Skipping cookie with mismatched domain: ${name}`);
+            return;
+          }
+  
+          // Construct the URL for the cookie
+          const cookieUrl = `http${secure ? 's' : ''}://${parsedUrl.hostname}${path}`;
+          
+          console.log('Setting cookie:', { cookieUrl, name, value, domain, path, secure, httpOnly, expirationDate });
+          
+          this.persistentSession.cookies.set({
+            url: cookieUrl,
+            name,
+            value,
+            domain: domain || parsedUrl.hostname,
+            path,
+            secure,
+            httpOnly,
+            expirationDate
+          }).catch(err => {
+            if (err.message.includes('EXCLUDE_INVALID_DOMAIN')) {
+              console.warn(`Failed to set cookie due to domain mismatch: ${name}`);
+            } else {
+              console.error('Error setting cookie:', err);
+            }
+          });
+        });
+      })
+      .catch(err => console.error('Error getting cookies:', err));
   }
   
 }
