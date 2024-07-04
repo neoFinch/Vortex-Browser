@@ -21,3 +21,11 @@ MacOS
 
 ## How it looks
 <img width="500" alt="Screenshot 2024-07-02 at 10 52 02 AM (2)" src="https://github.com/neoFinch/Vortex-Browser/assets/14983412/12db1c72-eb1b-402d-a4b3-c9b1cf32ed22">
+
+## How to setup
+1. Clone the repo
+2. Run command `npm install`
+3. To create build run `npm run make`
+4. To run in Dev Mode with auto-reloading - run command `npx electronmon .`
+5. To run in Dev Mode without auto-reload - run command `npm run start`
+
