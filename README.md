@@ -17,12 +17,9 @@ MacOS
 
 ## Features not implemented
 1. Restore a deleted tab using [CMD + SHIFT + T]
-![Screenshot 2024-07-12 at 1 10 13 PM](https://github.com/user-attachments/assets/1fba9b6d-ed87-4736-8ebb-7acdc3424cbe)
-
-
 
 ## How it looks
-
+![Screenshot 2024-07-12 at 1 10 13 PM](https://github.com/user-attachments/assets/1fba9b6d-ed87-4736-8ebb-7acdc3424cbe)
 
 ## How to setup
 1. Clone the repo
