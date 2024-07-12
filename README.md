@@ -17,11 +17,12 @@ MacOS
 
 ## Features not implemented
 1. Restore a deleted tab using [CMD + SHIFT + T]
+![Screenshot 2024-07-12 at 1 10 13 PM](https://github.com/user-attachments/assets/1fba9b6d-ed87-4736-8ebb-7acdc3424cbe)
 
 
 
 ## How it looks
-<img width="500" alt="Screenshot 2024-07-02 at 10 52 02 AM (2)" src="https://github.com/neoFinch/Vortex-Browser/assets/14983412/12db1c72-eb1b-402d-a4b3-c9b1cf32ed22">
+
 
 ## How to setup
 1. Clone the repo
