@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Tab</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 98vh;
+      background: linear-gradient(180deg, hsla(0, 45%, 58%, 1) 0%, hsla(19, 64%, 22%, 1) 100%);
+      font-family: sans-serif;
+      color: #777;
+      padding-top: 80px;
+    }
+    input {
+      width: 70%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <input id="new-tab-input" type="text" placeholder="Search..." onkeyup="handleKeyup(event)">
+</body>
+<script>
+const validDomains = [
+  'http',
+  'https',
+  'www',
+  '.com',
+  '.org',
+  '.net',
+  '.io',
+  '.gov',
+  '.edu',
+  '.co',
+  '.in',
+];
+  function handleKeyup(event) {
+    if (event.key === 'Enter') {
+      const value = event.target.value;
+      console.log({ value });
+      if (validDomains.some((domain) => value.includes(domain))) {
+        console.log('inside',{value})
+        window.electronAPI.navigate(`https://${value}`);
+      } else {
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(value)}`;
+        window.electronAPI.navigate(searchUrl);
+      }
+    }
+  }
+
+  window.onload = () => {
+    const input = document.querySelector('input');
+    input.focus();
+  }
+</script>
+</html>

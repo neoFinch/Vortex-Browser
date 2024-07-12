@@ -7,14 +7,17 @@
 
 <body>
   <div id="sidebar">
-    <div class="tip"> Press <span>CMD + .</span> to toggle sidebar </div>
+    <div class="drag-region"></div>
     <div class="urlBar-wrapper">
       <button onclick="goBack()"> <img class="deg-180" src="../../assets/forward.svg" alt="back"></button>
       <input autofocus type="text" id="urlBar" placeholder="Enter URL" onkeyup="navigate(event)">
       <button onclick="goForward()"> <img src="../../assets/forward.svg" alt="forward"> </button>
     </div>
-    <div>
-      <button id="newTab" onclick="createTab()">New Tab</button>
+    <div class="buttons">
+      <button id="newTab" class="action" onclick="createTab()">New Tab</button>
+      <button id="reload" class="action" onclick="reload()">
+        <img width="16px" src="../../assets/reload.png" alt="Reload">
+      </button>
     </div>
     <div id="tabList"></div>
   </div>
@@ -34,7 +37,7 @@
   }
 
   function createTab() {
-    window.electronAPI.createTab('https://www.google.com');
+    window.electronAPI.createTab();
   }
 
   // In your sidebar JavaScript
@@ -76,6 +79,10 @@
     window.electronAPI.closeTab(id);
   }
 
+  function reload() {
+    window.electronAPI.reload();
+  }
+
   function goBack() {
     window.electronAPI.goBack();
   }
@@ -89,5 +96,14 @@
     document.getElementById('urlBar').focus()
   })
   
+  window.electronAPI.onConvertImageToTensor((event, image) => {
+    console.log('image', image)
+    let imageElement = document.createElement('img')
+    imageElement.src = image
+    imageElement.onload = () => {
+      console.log({imageElement})
+      window.electronAPI.sendConvertedImageToTensor(imageElement)
+    }
+  })
 </script>
 </html>

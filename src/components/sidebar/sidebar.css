@@ -1,10 +1,18 @@
 :root {
   --color-background: #01012b88;
-  --color-sidebar: rgba(38, 38, 55, 0.7);
-  --color-active-tab: #ff2a6d;
-  --color-inactive-tab: #05d9e8;
-  --color-text: #FFFFFF;
+  /* --color-sidebar: rgba(38, 38, 55, 0.7); */
+  --color-sidebar: #0f2027;
+  
+  --color-active-tab: #ffffff99;
+  --color-active-tab-text: #333333;
+  --color-inactive-tab: #ffffff22;
+  --color-tab-hover: #ffffff44;
+
+  --color-text: #CCCCCC;
   --color-accent: #005678DD;
+  --color-new-tab-btn: #23232377;
+  --color-new-tab-btn-hover: #32323277;
+  --color-tab-border: #b0dee747;
 }
 
 body {
@@ -19,18 +27,21 @@ body {
 #sidebar {
   width: auto;
   height: 100vh;
-  background-color: var(--color-sidebar);
+  background: linear-gradient(180deg, hsla(0, 45%, 58%, 1) 0%, hsla(19, 64%, 22%, 1) 100%);
   backdrop-filter: blur(10px);
-  background-image: url('../../assets/sidebar-27.jpg');
   background-size: cover;
-  background-repeat: no-repeat;
-  background-position: 60% 0px;
+  background-repeat: repeat;
   display: flex;
   flex-direction: column;
   padding: 2px;
   overflow-x: hidden;
   overflow-y: hidden;
-  flex-wrap: nowrap
+  flex-wrap: nowrap; 
+}
+
+#sidebar .drag-region {
+  padding: 16px;
+  -webkit-app-region: drag;
 }
 
 #sidebar .tip {
@@ -54,7 +65,7 @@ body {
   border: none;
   outline: none;
   width: 30px;
-  height: 30px; 
+  height: 30px;
   border-radius: 50%;
   backdrop-filter: blur(5px);
   display: flex;
@@ -75,8 +86,8 @@ body {
 
 
 #urlBar {
-  background-color: #00567855;
-  border: 1px solid #05d9e8;
+  background-color: #00000055;
+  border: 1px solid #c5cdcd;
   backdrop-filter: blur(20px);
   width: calc(100% - 20px);
   border-radius: 20px;
@@ -86,24 +97,41 @@ body {
 }
 
 #urlBar:focus {
-  border: 2px solid gold;
+  border: 1px solid #c5cdcd;
 }
 
-button#newTab {
-  background-color: #005678AA;
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+
+button.action  {
+  /* background-color: var(--color-new-tab-btn); */
+  background-color: transparent;
   border: none;
-  color: #fff;
+  color: var(--color-text);
   width: 100%;
   padding: 5px;
   border-radius: 10px;
-  padding: 10px;
+  padding: 6px 10px;
   cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
+  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); */
+  backdrop-filter: blur(3px);
+  border: 1px solid var(--color-tab-border);
 }
-button#newTab:hover {
-  background-color: #005678DD;
+
+button.action:hover {
+  background-color: var(--color-new-tab-btn-hover);
   backdrop-filter: blur(5px);
+}
+
+button#newTab {
+  width: 80%;
+}
+button#reload {
+  width: 20%;
+  display: flex;
+  justify-content: center;
 }
 
 ::-webkit-scrollbar {
@@ -117,18 +145,15 @@ button#newTab:hover {
   overflow-y: scroll;
 
 }
+
 #tabList>div {
-  /* background-color: var(--color-inactive-tab); */
-  background-color: #FFFFFF22;
-  border: 1px solid var(--color-inactive-tab);
+  background-color: var(--color-inactive-tab);
+  border: 1px solid var(--color-tab-border);
   backdrop-filter: blur(5px);
   border-radius: 8px;
   transition: background-color 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 8px 16px;
   border-radius: 10px;
-  color: #fff;
-  cursor: pointer;
   gap: 10px;
   margin: 10px 0;
   word-wrap: ellipsis;
@@ -140,12 +165,12 @@ button#newTab:hover {
 #tabList>div>button {
   background-color: transparent;
   backdrop-filter: blur(5px);
-  background-color: red;
+  background-color: #000000AA;
   color: #fff;
   border: none;
   outline: none;
+  cursor: pointer;
   border-radius: 5px;
-  cursor: crosshair;
   display: none;
   font-size: 0.5rem;
 }
@@ -153,14 +178,16 @@ button#newTab:hover {
 #tabList>div:hover button {
   display: block;
 }
+
 #tabList>div:hover {
-  background-color: rgba(0, 255, 255, 0.5);
+  background-color: var(--color-tab-hover)
 }
 
 #tabList>div.active {
-  background-color: rgba(0, 255, 255, 0.5);
+  background-color: var(--color-active-tab);
   border: none;
-  color: #222;
-  border: 1px solid rgba(0, 255, 255, 0.5);
-  font-weight: 600;
+  color: var(--color-active-tab-text);
+  border: 1px solid var(--color-tab-border);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-weight: 500;
 }

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./find-in-page.css">
+</head>
+
+<body>
+  <div class="find-input-container">
+    <input type="text" id="find-input" placeholder="Find in page..." onkeyup="handleKeyup(event)">
+    <button id="close-button" onclick="closeFindInPage()">X</button>
+  </div>
+</body>
+
+<script>
+  function handleKeyup(event) {
+    const value = event.target.value;
+    console.log({value})
+    window.electronAPI.onKeyupInFindInPage(value);
+  }
+
+  function closeFindInPage() {
+    window.electronAPI.closeFindInPage();
+  }
+</script>
+
+</html>
