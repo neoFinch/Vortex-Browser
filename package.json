@@ -31,6 +31,10 @@
   },
   "license": "MIT",
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.1"
+    "@tensorflow-models/mobilenet": "^2.1.1",
+    "@tensorflow/tfjs-backend-webgl": "^4.20.0",
+    "@tensorflow/tfjs-node": "^4.20.0",
+    "electron-squirrel-startup": "^1.0.1",
+    "sharp": "^0.33.4"
   }
 }
