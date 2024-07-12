@@ -12,11 +12,12 @@ MacOS
 5. Shortcuts for creating a new tab, and deleting a tab [CMD + T, CMD + W].
 6. Reload Tab functionality
 7. Ability to access Developer Tools
+8. Search in a web page using [CMD + F]
 
 
 ## Features not implemented
 1. Restore a deleted tab using [CMD + SHIFT + T]
-2. Search in a web page using [CMD + F]
+
 
 
 ## How it looks
