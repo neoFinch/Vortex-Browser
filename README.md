@@ -20,7 +20,8 @@ MacOS
 2. ... and a lot more which I might not be aware of :)
 
 ## How it looks
-![Screenshot 2024-07-12 at 1 10 13 PM](https://github.com/user-attachments/assets/1fba9b6d-ed87-4736-8ebb-7acdc3424cbe)
+<img width="1440" alt="Screenshot 2024-07-14 at 2 52 20 PM" src="https://github.com/user-attachments/assets/e509aae9-ebb5-4dde-ac9d-c780b71e786d">
+
 
 ## How to setup
 1. Clone the repo
