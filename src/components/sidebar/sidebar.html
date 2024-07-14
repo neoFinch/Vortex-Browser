@@ -54,7 +54,22 @@
     // Add new tabs
     tabs.forEach(tab => {
       const tabElement = document.createElement('div');
-      tabElement.textContent = tab.title;
+      
+      let spinner = document.createElement('div');
+      spinner.classList.add('spinner');
+      
+      tabElement.appendChild(spinner);
+
+      if (tab.isLoading) {
+        spinner.style.display = 'block';
+      } else {
+        spinner.style.display = 'none';
+      }
+
+      let textElement = document.createElement('span');
+      textElement.textContent = tab.title;
+      tabElement.appendChild(textElement);
+
       tabElement.onclick = () => window.electronAPI.switchTab(tab.id);
       if (tab.id === activeTabId) {
         tabElement.classList.add('active');
@@ -66,7 +81,11 @@
       tabElement.appendChild(deleteBtn);
       tabList.appendChild(tabElement);
       if (tab.id === activeTabId) {
-        document.getElementById('urlBar').value = tab.url;
+        if (tab.url.includes('new-tab')) {
+          document.getElementById('urlBar').value = '';
+        } else {
+          document.getElementById('urlBar').value = tab.url;
+        }
       }
     });
 
@@ -96,14 +115,5 @@
     document.getElementById('urlBar').focus()
   })
   
-  window.electronAPI.onConvertImageToTensor((event, image) => {
-    console.log('image', image)
-    let imageElement = document.createElement('img')
-    imageElement.src = image
-    imageElement.onload = () => {
-      console.log({imageElement})
-      window.electronAPI.sendConvertedImageToTensor(imageElement)
-    }
-  })
 </script>
 </html>

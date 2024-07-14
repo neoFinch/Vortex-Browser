@@ -1,8 +1,6 @@
 const { WebContentsView, session, BaseWindow, Menu, MenuItem, ipcMain } = require("electron");
 const path = require("path");
-const { verifySessionStorage, base64ToArrayBuffer } = require("./helper");
-const { generateCaption, loadModel } = require("./ai-models/image-captioning");
-const tf = require('@tensorflow/tfjs-node');
+const chalk = require('chalk');
 class TabManager {
   /**
    * @param {{width: number, height: number}} currentBounds
@@ -25,9 +23,9 @@ class TabManager {
 
     this.persistentSession = null;
     
-    this.aiModel = null;
-
     this.isFindInPageViewVisible = false;
+
+    // this.navigationInProgress = {};
   }
 
   setWin(win) {
@@ -39,22 +37,31 @@ class TabManager {
     this.sidebar = sidebar;
   }
 
-  async loadAIModel() {
-    this.aiModel = await loadModel();
-  }
-
   createNewView(url) {
     const newView = new WebContentsView({
       webPreferences: {
         preload: path.join(__dirname, "../", "preload.js"),
         partition: "persist:browser-session",
+        nodeIntegration: false
       },
     });
 
     this.win.contentView.addChildView(newView);
 
     if (url !== '') {
-      newView.webContents.loadURL(url).catch((err) => {
+      // console.log('in if url is ', url)
+      // this.viewMap
+      // .get(this.activeTabId)
+      // .webContents
+      // .loadURL(url)
+      // .catch(err => {
+      //   console.log('💥💥 error loading url 💥💥💥', err)
+      // })
+      newView
+      .webContents
+      .loadURL(url)
+      .catch(async (err) => {
+        await newView.webContents.stop()
         console.log('💥💥 error loading url 💥💥💥', err);
         if (err.code === "ERR_NAME_NOT_RESOLVED" || err.code === "ERR_INTERNET_DISCONNECTED") {
           newView.webContents.loadFile(path.join(__dirname, "../", "components", "Errors", "address-not-resolved.html"));
@@ -84,47 +91,89 @@ class TabManager {
     return newView;
   }
 
-  createTab(url = '') {
-    console.log('creating tab ', url)
+  createTab(url = 'https://www.google.com') {
+    
+    console.log(chalk.green('1: creating tab '), url)
     const tabId = this.tabs.length + "-" + Date.now();
     let view = this.createNewView(url);
-    const newTab = { id: tabId, title: "New Tab", url: url };
+    const newTab = { id: tabId, title: "New Tab", url: url, isLoading: true };
     this.viewMap.set(tabId, view);
     this.tabs.push(newTab);
     this.activeTabId = tabId;
     this.updateTabs();
 
-    // view.webContents.openDevTools(); 
+    
+    // this.navigationInProgress[tabId] = true;
+    // view.webContents.openDevTools();
+    view.webContents.on('will-navigate', (event, url) => {
+      console.log('2: ::::::: >> will-navigate ', url)
+    });
+
+    view.webContents.on("did-start-navigation", (event, url, isInPlace, isMainFrame) => {
+      console.log('3: did-start-navigation', {url, isInPlace, isMainFrame})
+      // console.log('4: navigation status', this.navigationInProgress)
+      if (isMainFrame) {
+        // this.navigationInProgress.add(tabId);
+        this.tabs.find(tab => tab.id === tabId).url = url;
+        this.updateTabs();
+      }
+    });
+
+    view.webContents.on('will-frame-navigate', (event, url, isMainFrame) => {
+      console.log('5: will-frame-navigate', {url, isMainFrame})
+    })
+
+    view.webContents.on('will-prevent-unload', (event, url, isMainFrame) => {
+      console.log('6: will-prevent-unload', {url, isMainFrame})
+    })
+
+  
+    view.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      console.log('7: did-fail-load', errorCode, errorDescription, validatedURL, isMainFrame)
+      if (errorDescription === 'ERR_INTERNET_DISCONNECTED') {
+        view.webContents.loadFile(path.join(__dirname, "../", "components", "Errors", "no-internet-connection.html"));
+      }
+    })
 
     view.webContents.on("did-navigate", (event, url) => {
-      console.log('creating tab did-navigate')
-      // inititating loading state
-      view.webContents.executeJavaScript("document.body.classList.add('loading')").then((res) => {
-        console.log('loading state started -----')
-      }).catch((err) => {
-        console.error('error adding loading state', err)
-      })
+      console.log( chalk.red('8: did-navigate'), {url})
+      this.tabs.find((tab) => tab.id === tabId).isLoading = true;
       this.tabs.forEach((tab) => {
+        tab.url = url;
         if (tab.id === tabId) {
-          tab.url = url.includes('new-tab') ? '' : url;
+          // if (url.includes('new-tab') || url.includes('chrome://')) {
+          //   tab.url = '';
+          // }
           this.updateTabs();
-          this.persistCookiesForUrl(url);
+          // this.persistCookiesForUrl(url);
         }
       });
     });
 
     view.webContents.on("did-finish-load", (e) => {
-      console.log('loading finished ========')
+      console.log( chalk.blueBright('9: did-finish-load'))
+      // this.navigationInProgress[tabId] = false;
       // focus the url bar
       view.webContents.focus();
       
       view.webContents.executeJavaScript("document.title").then((title) => {
+        if (title.length > 30) {
+          title = title.substring(0, 30) + '...'
+        }
         this.tabs.filter((tab) => tab.id === tabId)[0].title = title;
         this.updateTabs();
-      });
+      }).catch(error => console.error("Error getting page title:", error));
     });
 
+    view.webContents.on('did-stop-loading', (event) => {
+      console.log(chalk.yellow('10: did-stop-loading'), this.tabs)
+      // this.navigationInProgress[tabId] = false;
+      this.tabs.find((tab) => tab.id === tabId).isLoading = false;
+      this.updateTabs();
+    })
+
     view.webContents.on("destroyed", () => {
+      // delete this.navigationInProgress[tabId]
       console.log("🚁 🚁 🚁 🚁  destroyed", tabId);
     });
 
@@ -134,7 +183,6 @@ class TabManager {
      *  and put the newly created tab in focus.
      */
     view.webContents.setWindowOpenHandler(details => {
-      console.log({details})
       let prevTabId = this.activeTabId
       this.createTab(details.url)
       this.switchTab(prevTabId)
@@ -146,7 +194,6 @@ class TabManager {
      * Which is it responisble for opening the dialog box when user right click on the page
      */
     view.webContents.on("context-menu", (event, params) => {
-      // console.log('context menu', params)
       event.preventDefault()
       const menu =  new Menu()
       menu.append(
@@ -168,17 +215,6 @@ class TabManager {
         }));
       }
 
-      if (params.mediaType === 'image') {
-        menu.append(new MenuItem({
-          label: 'Generate Caption',
-          click: () => {
-            console.log('generating captions')
-            console.log({srcURL: params});
-            
-            this.sidebar.webContents.send('convert-image-to-tensor', params.srcURL, this.aiModel.classify)
-          }
-        }));
-      }
       menu.popup()
       
     })
@@ -199,17 +235,34 @@ class TabManager {
     this.updateTabs();
   }
 
-  navigate(id, url, isNewTab = false) {
-    console.log("navigate", id, url, isNewTab);
+  async navigate(id, url, isNewTab = false) {
+    console.log('attemptinh to navigate', {id, url, isNewTab})
+    // if (this.navigationInProgress[id] === true) {
+    //   console.log("Navigation already in progress for tab:", id);
+    //   return;
+    // }
+    // this.navigationInProgress[id] = true
     if (this.tabs.length === 0) {
       this.createTab(url);
     } else if (isNewTab) {
       this.createTab(url);
     } else {
+      console.log(chalk.magenta('------------- ELSE ------------>'))
       this.tabs.find((tab) => tab.id === id).url = url;
       if (id === this.activeTabId) {
+        console.log('Loading ...............................................', chalk.magenta(this.viewMap.get(id)?.webContents?.isLoadingMainFrame()))
+
+        this.viewMap.get(id)?.webContents?.stop();
+
+        console.log('Stopped ...............................................', chalk.magenta(this.viewMap.get(id)?.webContents?.isLoadingMainFrame()))
+        // console.log(`navigation in progress ${id}`, this.navigationInProgress)
+        // if (this.navigationInProgress[id]) {
+        //   console.log('Stopping for ...............................................', id)
+        //   this.viewMap.get(id)?.webContents?.stop();
+        // }
         this.viewMap.get(id)?.webContents?.loadURL(url).catch((err) => {
-          console.log('💥💥💥💥 error loading url - 2 💥💥💥', err);
+          console.log('💥💥💥💥 error loading url - 42 💥💥💥', err);
+          this.tabs.find((tab) => tab.id === id).url = url; 
           if (
             err.code === "ERR_NAME_NOT_RESOLVED" ||
             err.code === "ERR_INTERNET_DISCONNECTED"
@@ -240,13 +293,8 @@ class TabManager {
     }
   }
 
-  updateTabTitle(id, title) {
-    this.tabs[id].title = title;
-    this.updateTabs();
-  }
 
   updateTabs() {
-    console.log("active tab id", this.activeTabId);
     this.sidebar.webContents.send("update-tabs", {
       tabs: this.tabs,
       activeTabId: this.activeTabId,
@@ -254,10 +302,11 @@ class TabManager {
   }
 
   closeTab(id) {
-    console.log({ clostabid: id });
+    // this.navigationInProgress.delete(id);
+    // delete this.navigationInProgress[id];
     let viewToDestroy = this.viewMap.get(id);
     viewToDestroy.setVisible(false);
-    console.log("destroying view", viewToDestroy.webContents.getTitle());
+    console.log("destroying view/tab", viewToDestroy.webContents.getTitle());
     if (!viewToDestroy) return;
 
     this.win.contentView.removeChildView(viewToDestroy);
@@ -275,21 +324,19 @@ class TabManager {
       view.setVisible(true);
     });
 
-    // this.activeTabId = this.tabs[this.tabs.length - 1]?.id;
-
     if (this.tabs.length === 0) {
       this.createTab();
     }
     this.updateTabs();
-    // this.switchTab(this.activeTabId);
+
     // bring the tab to front
 
-    setTimeout(() => {
-      console.log(" 🌸is destroyed", viewToDestroy?.webContents?.isDestroyed());
-      this.viewMap.forEach((view, key) => {
-        console.log("remaining views", view.webContents.getTitle());
-      });
-    }, 2000);
+    // setTimeout(() => {
+    //   console.log(" 🌸is destroyed", viewToDestroy?.webContents?.isDestroyed());
+    //   this.viewMap.forEach((view, key) => {
+    //     console.log("remaining views", view.webContents.getTitle());
+    //   });
+    // }, 2000);
   }
 
   toggleSidebar() {
@@ -333,75 +380,73 @@ class TabManager {
       return;
     }
 
-    const parsedUrl = new URL(url);
+    // const parsedUrl = new URL(url);
 
-    this.persistentSession.cookies
-      .get({ url })
-      .then((cookies) => {
-        cookies.forEach((cookie) => {
-          const {
-            name,
-            value,
-            domain,
-            path,
-            secure,
-            httpOnly,
-            expirationDate,
-          } = cookie;
+    // this.persistentSession.cookies
+    //   .get({ url })
+    //   .then((cookies) => {
+    //     cookies.forEach((cookie) => {
+    //       const {
+    //         name,
+    //         value,
+    //         domain,
+    //         path,
+    //         secure,
+    //         httpOnly,
+    //         expirationDate,
+    //       } = cookie;
 
-          // Check if the cookie's domain is a subdomain of the current URL
-          if (
-            !domain ||
-            !parsedUrl.hostname.endsWith(
-              domain.startsWith(".") ? domain : `.${domain}`
-            )
-          ) {
-            console.warn(`Skipping cookie with mismatched domain: ${name}`);
-            return;
-          }
+    //       // Check if the cookie's domain is a subdomain of the current URL
+    //       if (
+    //         !domain ||
+    //         !parsedUrl.hostname.endsWith(
+    //           domain.startsWith(".") ? domain : `.${domain}`
+    //         )
+    //       ) {
+    //         console.warn(`Skipping cookie with mismatched domain: ${name}`);
+    //         return;
+    //       }
 
-          // Construct the URL for the cookie
-          const cookieUrl = `http${secure ? "s" : ""}://${
-            parsedUrl.hostname
-          }${path}`;
+    //       // Construct the URL for the cookie
+    //       const cookieUrl = `http${secure ? "s" : ""}://${
+    //         parsedUrl.hostname
+    //       }${path}`;
 
-          // console.log("Setting cookie:", {
-          //   cookieUrl,
-          //   name,
-          //   value,
-          //   domain,
-          //   path,
-          //   secure,
-          //   httpOnly,
-          //   expirationDate,
-          // });
+    //       // console.log("Setting cookie:", {
+    //       //   cookieUrl,
+    //       //   name,
+    //       //   value,
+    //       //   domain,
+    //       //   path,
+    //       //   secure,
+    //       //   httpOnly,
+    //       //   expirationDate,
+    //       // });
 
-          this.persistentSession.cookies
-            .set({
-              url: cookieUrl,
-              name,
-              value,
-              domain: domain || parsedUrl.hostname,
-              path,
-              secure,
-              httpOnly,
-              expirationDate,
-            })
-            .catch((err) => {
-              if (err.message.includes("EXCLUDE_INVALID_DOMAIN")) {
-                console.warn(
-                  `Failed to set cookie due to domain mismatch: ${name}`
-                );
-              } else {
-                console.error("Error setting cookie:", err);
-              }
-            });
-        });
-      })
-      .catch((err) => console.error("Error getting cookies:", err));
+    //       this.persistentSession.cookies
+    //         .set({
+    //           url: cookieUrl,
+    //           name,
+    //           value,
+    //           domain: domain || parsedUrl.hostname,
+    //           path,
+    //           secure,
+    //           httpOnly,
+    //           expirationDate,
+    //         })
+    //         .catch((err) => {
+    //           if (err.message.includes("EXCLUDE_INVALID_DOMAIN")) {
+    //             console.warn(
+    //               `Failed to set cookie due to domain mismatch: ${name}`
+    //             );
+    //           } else {
+    //             console.error("Error setting cookie:", err);
+    //           }
+    //         });
+    //     });
+    //   })
+    //   .catch((err) => console.error("Error getting cookies:", err));
   }
-
-  toggleFindInPageView() {}
 
   splitVertically() {
     /**
@@ -454,11 +499,7 @@ class TabManager {
       });
     }
 
-    // this.win.contentView.children.forEach((child) => {
-    //   child.setVisible(true)
-    // });
     
-
     this.win.contentView.addChildView(temporaryView);
   }
 }

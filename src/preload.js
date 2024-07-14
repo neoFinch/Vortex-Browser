@@ -17,14 +17,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onKeyupInFindInPage: (value) => ipcRenderer.send('keyup-in-find-in-page', value),
   closeFindInPage: () => ipcRenderer.send('close-find-in-page'),
 
-  onConvertImageToTensor: (callback, model) => {
-    console.log('lalala', {callback, model})
-    return  ipcRenderer.on('convert-image-to-tensor', callback, model)
-  },
-
-  sendConvertedImageToTensor: (image) => {
-    ipcRenderer.send('converted-image-to-tensor', image)
-  },
-
   reload: () => ipcRenderer.send('reload'),
 }) 
