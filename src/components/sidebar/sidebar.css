@@ -11,7 +11,7 @@
   --color-text: #CCCCCC;
   --color-accent: #005678DD;
   --color-new-tab-btn: #23232377;
-  --color-new-tab-btn-hover: #32323277;
+  --color-new-tab-btn-hover: #d6d6d677;
   --color-tab-border: #b0dee747;
 }
 
@@ -26,8 +26,13 @@ body {
 
 #sidebar {
   width: auto;
-  height: 100vh;
-  background: linear-gradient(180deg, hsla(0, 45%, 58%, 1) 0%, hsla(19, 64%, 22%, 1) 100%);
+  height: calc(100vh - 4px);
+  
+  background: #093028;
+  background: -webkit-linear-gradient(to bottom, #237A57, #093028);  
+  background: linear-gradient(to bottom, #237A57, #093028);
+  
+
   backdrop-filter: blur(10px);
   background-size: cover;
   background-repeat: repeat;
@@ -37,6 +42,7 @@ body {
   overflow-x: hidden;
   overflow-y: hidden;
   flex-wrap: nowrap; 
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 #sidebar .drag-region {
@@ -61,8 +67,8 @@ body {
 }
 
 .urlBar-wrapper>button {
-  background-color: #FFFFFFAA;
-  border: none;
+  background-color: transparent;
+  border: 1px solid var(--color-tab-border);
   outline: none;
   width: 30px;
   height: 30px;
@@ -72,6 +78,11 @@ body {
   align-items: center;
   justify-items: center;
   cursor: pointer;
+}
+
+.urlBar-wrapper>button:hover {
+  background-color: var(--color-new-tab-btn-hover);
+  backdrop-filter: blur(5px);
 }
 
 .urlBar-wrapper>button>img {
@@ -106,16 +117,13 @@ body {
 }
 
 button.action  {
-  /* background-color: var(--color-new-tab-btn); */
   background-color: transparent;
-  border: none;
-  color: var(--color-text);
+  color: #fff;
   width: 100%;
   padding: 5px;
   border-radius: 10px;
   padding: 6px 10px;
   cursor: pointer;
-  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); */
   backdrop-filter: blur(3px);
   border: 1px solid var(--color-tab-border);
 }
@@ -156,10 +164,16 @@ button#reload {
   border-radius: 10px;
   gap: 10px;
   margin: 10px 0;
-  word-wrap: ellipsis;
+  max-height: 30px;
   font-size: 0.8rem;
   display: flex;
-  justify-content: space-between;
+  /* justify-content: space-between; */
+  border-bottom: 2px solid green;
+}
+
+#tabList>div>span {
+  margin-left: 10px;
+  flex: 1;
 }
 
 #tabList>div>button {
@@ -173,6 +187,8 @@ button#reload {
   border-radius: 5px;
   display: none;
   font-size: 0.5rem;
+  max-height: 20px;
+  justify-self: flex-end;
 }
 
 #tabList>div:hover button {
@@ -190,4 +206,24 @@ button#reload {
   border: 1px solid var(--color-tab-border);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   font-weight: 500;
+}
+
+div>div.spinner {
+  /* position: absolute; */
+  width: 8px;
+  height: 8px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  left: -4px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

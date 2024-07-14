@@ -43,7 +43,7 @@ function createWindow() {
       partition: "persist:browser-session",
     },
   });
-  win.setBackgroundColor('#c46464')
+  win.setBackgroundColor('#237A57')
 
   urlBar.webContents.loadFile(
     path.join(__dirname, "components", "url-dialog", "url-dialog.html")
@@ -178,6 +178,9 @@ function createWindow() {
           label: "Find",
           click: manageFindInPageView,
         },
+        {
+          role: 'paste'
+        }
       ],
     })
   );
@@ -285,7 +288,6 @@ app.whenReady().then(() => {
   win.contentView.addChildView(findInPageView);
   tabManager.setWin(win);
   tabManager.setSidebar(sidebar);
-  tabManager.loadAIModel();
   Menu.setApplicationMenu(menu);
 });
 
@@ -348,23 +350,6 @@ ipcMain.on("close-find-in-page", () => {
   console.log("close-find-in-page");
   manageFindInPageView()
 });
-
-// ipcMain.on('convert-image-to-tensor', async (image) => {
-//   console.log('convert image to tensor', image  )
-// })
-
-ipcMain.on("converted-image-to-tensor", async (event, image) => {
-  console.log("converted image to tensor", event, image);
-  tabManager.aiModel
-    .classify(image)
-    .then((caption) => {
-      console.log("captions", caption);
-    })
-    .catch((err) => {
-      console.error("error generating captions", err);
-    });
-});
-
 
 ipcMain.on("reload", () => {
   tabManager.viewMap.get(tabManager.activeTabId)?.webContents?.reload();

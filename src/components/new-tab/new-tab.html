@@ -7,11 +7,14 @@
   <title>New Tab</title>
   <style>
     body {
+      overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: flex-start;
       height: 98vh;
-      background: linear-gradient(180deg, hsla(0, 45%, 58%, 1) 0%, hsla(19, 64%, 22%, 1) 100%);
+      background: #093028;  /* fallback for old browsers */
+      background: -webkit-linear-gradient(to bottom, #237A57, #093028);  
+      background: linear-gradient(to bottom, #237A57, #093028); 
       font-family: sans-serif;
       color: #777;
       padding-top: 80px;
