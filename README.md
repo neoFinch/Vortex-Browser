@@ -20,7 +20,11 @@ MacOS
 2. ... and a lot more which I might not be aware of :)
 
 ## How it looks
+### On MacOS
 <img width="1440" alt="Screenshot 2024-07-14 at 2 52 20 PM" src="https://github.com/user-attachments/assets/e509aae9-ebb5-4dde-ac9d-c780b71e786d">
+
+### On Ubuntu
+![Screenshot from 2024-07-17 14-08-10](https://github.com/user-attachments/assets/c39c01d1-bd46-425c-bfad-d9976cfbf635)
 
 
 ## How to setup
