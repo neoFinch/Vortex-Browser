@@ -6,10 +6,13 @@ const {
   MenuItem,
   Menu,
   webContents,
+  session,
 } = require("electron");
 const path = require("path");
 const { debounce } = require("./backend/helper");
 const TabManager = require("./backend/TabManager");
+const chalk = require("chalk");
+const fs = require('fs');
 
 /**
  * @type {BaseWindow|null}
@@ -180,6 +183,12 @@ function createWindow() {
         },
         {
           role: 'paste'
+        },
+        {
+          role: 'copy'
+        },
+        {
+          role: 'cut'
         }
       ],
     })
@@ -261,6 +270,8 @@ function resizeViews() {
   currentBounds.width = contnetSize[0];
   currentBounds.height = contnetSize[1];
 }
+
+console.log( chalk.bgBlueBright('User data path:', app.getPath('userData')));
 
 app.whenReady().then(() => {
   createWindow();
@@ -351,6 +362,22 @@ ipcMain.on("close-find-in-page", () => {
   manageFindInPageView()
 });
 
+
 ipcMain.on("reload", () => {
   tabManager.viewMap.get(tabManager.activeTabId)?.webContents?.reload();
 });
+
+app.on('will-quit', () => {
+  logSessionData()
+})
+
+function logSessionData() {
+  const ses = session.fromPartition('persist:browser-session');
+  ses.cookies.get({})
+    .then((cookies) => {
+      fs.writeFileSync('session_log.txt', JSON.stringify(cookies, null, 2));
+    })
+    .catch((error) => {
+      console.error('Failed to get cookies', error);
+    });
+}
