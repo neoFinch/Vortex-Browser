@@ -37,16 +37,33 @@ class TabManager {
     this.sidebar = sidebar;
   }
 
+  
+
   createNewView(url) {
     const newView = new WebContentsView({
       webPreferences: {
         preload: path.join(__dirname, "../", "preload.js"),
         partition: "persist:browser-session",
-        nodeIntegration: false
+        nodeIntegration: false,
+        contextIsolation: true
       },
     });
 
+
+    let currentUserAgent = newView.webContents.getUserAgent();
+
+    let modifiedUserAgent = currentUserAgent.replace(' vortex-browser/1.0.0', '');
+    // modifiedUserAgent = modifiedUserAgent.replace(' Electron/31.0.2', '');
+  
+    console.log('current user agent', currentUserAgent);
+    console.log('modfied user agent', modifiedUserAgent);
+    
+
+
     this.win.contentView.addChildView(newView);
+
+    newView.webContents.setUserAgent(modifiedUserAgent);
+    // newView.webContents.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 
     if (url !== '') {
       // console.log('in if url is ', url)
@@ -162,6 +179,7 @@ class TabManager {
         }
         this.tabs.filter((tab) => tab.id === tabId)[0].title = title;
         this.updateTabs();
+        this.persistCookiesForUrl(url);
       }).catch(error => console.error("Error getting page title:", error));
     });
 
@@ -182,11 +200,13 @@ class TabManager {
      *  Also we are switching to the previous tab because the this.createTab() method creates
      *  and put the newly created tab in focus.
      */
-    view.webContents.setWindowOpenHandler(details => {
-      let prevTabId = this.activeTabId
-      this.createTab(details.url)
-      this.switchTab(prevTabId)
-      return {action: 'deny'}
+    view.webContents.setWindowOpenHandler((details) => {
+      console.log({ details });
+      console.log(chalk.yellow("Outside spotify login"));
+      let prevTabId = this.activeTabId;
+      this.createTab(details.url);
+      this.switchTab(prevTabId);
+      return { action: "deny" };
     });
     
     /**
@@ -329,14 +349,6 @@ class TabManager {
     }
     this.updateTabs();
 
-    // bring the tab to front
-
-    // setTimeout(() => {
-    //   console.log(" 🌸is destroyed", viewToDestroy?.webContents?.isDestroyed());
-    //   this.viewMap.forEach((view, key) => {
-    //     console.log("remaining views", view.webContents.getTitle());
-    //   });
-    // }, 2000);
   }
 
   toggleSidebar() {
@@ -380,72 +392,73 @@ class TabManager {
       return;
     }
 
-    // const parsedUrl = new URL(url);
+    const parsedUrl = new URL(url);
 
-    // this.persistentSession.cookies
-    //   .get({ url })
-    //   .then((cookies) => {
-    //     cookies.forEach((cookie) => {
-    //       const {
-    //         name,
-    //         value,
-    //         domain,
-    //         path,
-    //         secure,
-    //         httpOnly,
-    //         expirationDate,
-    //       } = cookie;
+    this.persistentSession
+      .cookies
+      .get({ url })
+      .then((cookies) => {
+        cookies.forEach((cookie) => {
+          const {
+            name,
+            value,
+            domain,
+            path,
+            secure,
+            httpOnly,
+            expirationDate,
+          } = cookie;
 
-    //       // Check if the cookie's domain is a subdomain of the current URL
-    //       if (
-    //         !domain ||
-    //         !parsedUrl.hostname.endsWith(
-    //           domain.startsWith(".") ? domain : `.${domain}`
-    //         )
-    //       ) {
-    //         console.warn(`Skipping cookie with mismatched domain: ${name}`);
-    //         return;
-    //       }
+          // Check if the cookie's domain is a subdomain of the current URL
+          if (
+            !domain ||
+            !parsedUrl.hostname.endsWith(
+              domain.startsWith(".") ? domain : `.${domain}`
+            )
+          ) {
+            console.warn(`Skipping cookie with mismatched domain: ${name}`);
+            return;
+          }
 
-    //       // Construct the URL for the cookie
-    //       const cookieUrl = `http${secure ? "s" : ""}://${
-    //         parsedUrl.hostname
-    //       }${path}`;
+          // Construct the URL for the cookie
+          const cookieUrl = `http${secure ? "s" : ""}://${
+            parsedUrl.hostname
+          }${path}`;
 
-    //       // console.log("Setting cookie:", {
-    //       //   cookieUrl,
-    //       //   name,
-    //       //   value,
-    //       //   domain,
-    //       //   path,
-    //       //   secure,
-    //       //   httpOnly,
-    //       //   expirationDate,
-    //       // });
+          // console.log("Setting cookie:", {
+          //   cookieUrl,
+          //   name,
+          //   value,
+          //   domain,
+          //   path,
+          //   secure,
+          //   httpOnly,
+          //   expirationDate,
+          // });
 
-    //       this.persistentSession.cookies
-    //         .set({
-    //           url: cookieUrl,
-    //           name,
-    //           value,
-    //           domain: domain || parsedUrl.hostname,
-    //           path,
-    //           secure,
-    //           httpOnly,
-    //           expirationDate,
-    //         })
-    //         .catch((err) => {
-    //           if (err.message.includes("EXCLUDE_INVALID_DOMAIN")) {
-    //             console.warn(
-    //               `Failed to set cookie due to domain mismatch: ${name}`
-    //             );
-    //           } else {
-    //             console.error("Error setting cookie:", err);
-    //           }
-    //         });
-    //     });
-    //   })
-    //   .catch((err) => console.error("Error getting cookies:", err));
+          this.persistentSession.cookies
+            .set({
+              url: cookieUrl,
+              name,
+              value,
+              domain: domain || parsedUrl.hostname,
+              path,
+              secure,
+              httpOnly,
+              expirationDate,
+            })
+            .catch((err) => {
+              if (err.message.includes("EXCLUDE_INVALID_DOMAIN")) {
+                console.warn(
+                  `Failed to set cookie due to domain mismatch: ${name}`
+                );
+              } else {
+                console.error("Error setting cookie:", err);
+              }
+            });
+        });
+      })
+      .catch((err) => console.error("Error getting cookies:", err));
   }
 
   splitVertically() {
