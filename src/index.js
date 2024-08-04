@@ -13,6 +13,7 @@ const { debounce } = require("./backend/helper");
 const TabManager = require("./backend/TabManager");
 const chalk = require("chalk");
 const fs = require('fs');
+const { sandboxed } = require("process");
 
 /**
  * @type {BaseWindow|null}
@@ -37,6 +38,11 @@ function createWindow() {
     height: currentBounds.height,
     backgroundColor: "rgba(28, 28, 45, 0.8)",
     titleBarStyle: "hiddenInset",
+    webPreferences: {
+      plugins: true,
+      sandboxed: true,
+      enableWebContentIsolation: true
+    }
   });
 
   let urlBar = new WebContentsView({
@@ -60,7 +66,7 @@ function createWindow() {
   urlBar.setVisible(isUrlBarVisible);
   urlBar.setBackgroundColor("#00000000");
 
-  const debouncedResizeViews = debounce(resizeViews, 200);
+  const debouncedResizeViews = debounce(resizeViews, 100);
   win.on("resize", debouncedResizeViews);
 
   sidebar = new WebContentsView({
@@ -180,6 +186,9 @@ function createWindow() {
           accelerator: "CommandOrControl+f",
           label: "Find",
           click: manageFindInPageView,
+        },
+        {
+          role: "selectAll"
         },
         {
           role: 'paste'
