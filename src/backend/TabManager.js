@@ -1,6 +1,7 @@
 const { WebContentsView, session, BaseWindow, Menu, MenuItem, ipcMain } = require("electron");
 const path = require("path");
 const chalk = require('chalk');
+
 class TabManager {
   /**
    * @param {{width: number, height: number}} currentBounds
@@ -20,9 +21,10 @@ class TabManager {
 
     /** @type {WebContentsView} */
     this.sidebar = null;
+    this.isSidebarVisible = false;
 
     this.persistentSession = null;
-    
+
     this.isFindInPageViewVisible = false;
 
     // this.navigationInProgress = {};
@@ -37,7 +39,6 @@ class TabManager {
     this.sidebar = sidebar;
   }
 
-  
 
   createNewView(url) {
     const newView = new WebContentsView({
@@ -54,42 +55,33 @@ class TabManager {
 
     let modifiedUserAgent = currentUserAgent.replace(' vortex-browser/1.0.0', '');
     // modifiedUserAgent = modifiedUserAgent.replace(' Electron/31.0.2', '');
-  
+
     console.log('current user agent', currentUserAgent);
     console.log('modfied user agent', modifiedUserAgent);
-    
+
 
 
     this.win.contentView.addChildView(newView);
 
     newView.webContents.setUserAgent(modifiedUserAgent);
-    // newView.webContents.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 
     if (url !== '') {
-      // console.log('in if url is ', url)
-      // this.viewMap
-      // .get(this.activeTabId)
-      // .webContents
-      // .loadURL(url)
-      // .catch(err => {
-      //   console.log('💥💥 error loading url 💥💥💥', err)
-      // })
       newView
-      .webContents
-      .loadURL(url)
-      .catch(async (err) => {
-        await newView.webContents.stop()
-        console.log('💥💥 error loading url 💥💥💥', err);
-        if (err.code === "ERR_NAME_NOT_RESOLVED" || err.code === "ERR_INTERNET_DISCONNECTED") {
-          newView.webContents.loadFile(path.join(__dirname, "../", "components", "Errors", "address-not-resolved.html"));
-        } else {
-          newView.webContents.loadFile(path.join(__dirname, "../", "components", "Errors", "something-went-wrong.html"));
-        }
-      })
+        .webContents
+        .loadURL(url)
+        .catch(async (err) => {
+          await newView.webContents.stop()
+          console.log('💥💥 error loading url 💥💥💥', err);
+          if (err.code === "ERR_NAME_NOT_RESOLVED" || err.code === "ERR_INTERNET_DISCONNECTED") {
+            newView.webContents.loadFile(path.join(__dirname, "../", "components", "Errors", "address-not-resolved.html"));
+          } else {
+            newView.webContents.loadFile(path.join(__dirname, "../", "components", "Errors", "something-went-wrong.html"));
+          }
+        })
     } else {
       newView.webContents.loadFile(path.join(__dirname, "../", "components", "new-tab", "new-tab.html"));
     }
-    
+
     newView.setBounds({
       x: 300,
       y: 0,
@@ -109,7 +101,7 @@ class TabManager {
   }
 
   createTab(url = 'https://www.google.com') {
-    
+
     console.log(chalk.green('1: creating tab '), url)
     const tabId = this.tabs.length + "-" + Date.now();
     let view = this.createNewView(url);
@@ -119,7 +111,7 @@ class TabManager {
     this.activeTabId = tabId;
     this.updateTabs();
 
-    
+
     // this.navigationInProgress[tabId] = true;
     // view.webContents.openDevTools();
     view.webContents.on('will-navigate', (event, url) => {
@@ -127,24 +119,22 @@ class TabManager {
     });
 
     view.webContents.on("did-start-navigation", (event, url, isInPlace, isMainFrame) => {
-      console.log('3: did-start-navigation', {url, isInPlace, isMainFrame})
-      // console.log('4: navigation status', this.navigationInProgress)
+      console.log('3: did-start-navigation', { url, isInPlace, isMainFrame })
       if (isMainFrame) {
-        // this.navigationInProgress.add(tabId);
         this.tabs.find(tab => tab.id === tabId).url = url;
         this.updateTabs();
       }
     });
 
     view.webContents.on('will-frame-navigate', (event, url, isMainFrame) => {
-      console.log('5: will-frame-navigate', {url, isMainFrame})
+      console.log('5: will-frame-navigate', { url, isMainFrame })
     })
 
     view.webContents.on('will-prevent-unload', (event, url, isMainFrame) => {
-      console.log('6: will-prevent-unload', {url, isMainFrame})
+      console.log('6: will-prevent-unload', { url, isMainFrame })
     })
 
-  
+
     view.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
       console.log('7: did-fail-load', errorCode, errorDescription, validatedURL, isMainFrame)
       if (errorDescription === 'ERR_INTERNET_DISCONNECTED') {
@@ -152,27 +142,36 @@ class TabManager {
       }
     })
 
+    view.webContents.on("enter-html-full-screen", (event) => {
+      console.log(chalk.yellow('enter-html-full-screen'))
+      setTimeout(() => {
+        this.hideSidebar()
+      }, 300)
+    })
+
+
+    view.webContents.on("leave-html-full-screen", (event) => {
+      console.log(chalk.yellow('leave-html-full-screen'))
+      this.showSidebar()
+    })
+
     view.webContents.on("did-navigate", (event, url) => {
-      console.log( chalk.red('8: did-navigate'), {url})
+      console.log(chalk.red('8: did-navigate'), { url })
       this.tabs.find((tab) => tab.id === tabId).isLoading = true;
       this.tabs.forEach((tab) => {
         tab.url = url;
         if (tab.id === tabId) {
-          // if (url.includes('new-tab') || url.includes('chrome://')) {
-          //   tab.url = '';
-          // }
           this.updateTabs();
-          // this.persistCookiesForUrl(url);
         }
       });
     });
 
     view.webContents.on("did-finish-load", (e) => {
-      console.log( chalk.blueBright('9: did-finish-load'))
+      console.log(chalk.blueBright('9: did-finish-load'))
       // this.navigationInProgress[tabId] = false;
       // focus the url bar
       view.webContents.focus();
-      
+
       view.webContents.executeJavaScript("document.title").then((title) => {
         if (title.length > 30) {
           title = title.substring(0, 30) + '...'
@@ -208,14 +207,14 @@ class TabManager {
       this.switchTab(prevTabId);
       return { action: "deny" };
     });
-    
+
     /**
      * The below code is for context menu
      * Which is it responisble for opening the dialog box when user right click on the page
      */
     view.webContents.on("context-menu", (event, params) => {
       event.preventDefault()
-      const menu =  new Menu()
+      const menu = new Menu()
       menu.append(
         new MenuItem({
           label: 'Open Dev Tools',
@@ -236,7 +235,7 @@ class TabManager {
       }
 
       menu.popup()
-      
+
     })
     return tabId;
   }
@@ -256,12 +255,8 @@ class TabManager {
   }
 
   async navigate(id, url, isNewTab = false) {
-    console.log('attemptinh to navigate', {id, url, isNewTab})
-    // if (this.navigationInProgress[id] === true) {
-    //   console.log("Navigation already in progress for tab:", id);
-    //   return;
-    // }
-    // this.navigationInProgress[id] = true
+    console.log('attemptinh to navigate', { id, url, isNewTab })
+
     if (this.tabs.length === 0) {
       this.createTab(url);
     } else if (isNewTab) {
@@ -275,14 +270,11 @@ class TabManager {
         this.viewMap.get(id)?.webContents?.stop();
 
         console.log('Stopped ...............................................', chalk.magenta(this.viewMap.get(id)?.webContents?.isLoadingMainFrame()))
-        // console.log(`navigation in progress ${id}`, this.navigationInProgress)
-        // if (this.navigationInProgress[id]) {
-        //   console.log('Stopping for ...............................................', id)
-        //   this.viewMap.get(id)?.webContents?.stop();
-        // }
+
+        // if ()
         this.viewMap.get(id)?.webContents?.loadURL(url).catch((err) => {
           console.log('💥💥💥💥 error loading url - 42 💥💥💥', err);
-          this.tabs.find((tab) => tab.id === id).url = url; 
+          this.tabs.find((tab) => tab.id === id).url = url;
           if (
             err.code === "ERR_NAME_NOT_RESOLVED" ||
             err.code === "ERR_INTERNET_DISCONNECTED"
@@ -322,8 +314,7 @@ class TabManager {
   }
 
   closeTab(id) {
-    // this.navigationInProgress.delete(id);
-    // delete this.navigationInProgress[id];
+
     let viewToDestroy = this.viewMap.get(id);
     viewToDestroy.setVisible(false);
     console.log("destroying view/tab", viewToDestroy.webContents.getTitle());
@@ -351,9 +342,45 @@ class TabManager {
 
   }
 
+  hideSidebar() {
+    this.sidebar.setBounds({
+      x: 0,
+      y: 0,
+      width: 0,
+      height: this.currentBounds.height,
+    });
+    this.viewMap.forEach((view, key) => {
+      view.setBounds({
+        x: 0,
+        y: 0,
+        width: this.currentBounds.width,
+        height: this.currentBounds.height,
+      });
+    });
+  }
+
+  showSidebar() {
+    this.sidebar.setBounds({
+      x: 0,
+      y: 0,
+      width: 300,
+      height: this.currentBounds.height,
+    });
+    this.viewMap.forEach((view, key) => {
+      view.setBounds({
+        x: 300,
+        y: 0,
+        width: this.currentBounds.width - 300,
+        height: this.currentBounds.height,
+      });
+    });
+
+  }
+
   toggleSidebar() {
     let bounds = this.sidebar.getBounds();
     if (bounds.width === 0) {
+
       this.sidebar.setBounds({
         x: 0,
         y: 0,
@@ -369,6 +396,7 @@ class TabManager {
         });
       });
     } else {
+
       this.sidebar.setBounds({
         x: 0,
         y: 0,
@@ -421,20 +449,8 @@ class TabManager {
           }
 
           // Construct the URL for the cookie
-          const cookieUrl = `http${secure ? "s" : ""}://${
-            parsedUrl.hostname
-          }${path}`;
-
-          // console.log("Setting cookie:", {
-          //   cookieUrl,
-          //   name,
-          //   value,
-          //   domain,
-          //   path,
-          //   secure,
-          //   httpOnly,
-          //   expirationDate,
-          // });
+          const cookieUrl = `http${secure ? "s" : ""}://${parsedUrl.hostname
+            }${path}`;
 
           this.persistentSession.cookies
             .set({
@@ -483,7 +499,7 @@ class TabManager {
     }
 
     this.openSuggestionForContemporaryView()
-    
+
   }
 
   openSuggestionForContemporaryView() {
@@ -505,14 +521,14 @@ class TabManager {
       });
     } else {
       temporaryView.setBounds({
-        x: (this.currentBounds.width / 2 ) + (sidebarBounds.width / 2),
+        x: (this.currentBounds.width / 2) + (sidebarBounds.width / 2),
         y: 0,
         width: (this.currentBounds.width - sidebarBounds.width) / 2,
         height: this.currentBounds.height,
       });
     }
 
-    
+
     this.win.contentView.addChildView(temporaryView);
   }
 }
