@@ -31,6 +31,7 @@ MacOS
 1. Clone the repo
 2. Run command `npm install`
 3. To create build run `npm run make`
-4. To run in Dev Mode with auto-reloading - run command `npx electronmon .`
-5. To run in Dev Mode without auto-reload - run command `npm run start`
+   -  It will generate appropriate executables based on your system (mac, linux, windows) in the `out` directory.
+5. To run in Dev Mode with auto-reloading - run command `npx electronmon .`
+6. To run in Dev Mode without auto-reload - run command `npm run start`
 
