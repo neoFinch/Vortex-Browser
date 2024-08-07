@@ -2,7 +2,7 @@
 A web-browser built using Electron JS
 
 ## Platform supported
-MacOS
+MacOS, Linux, Windows (partially)
 
 ## Features Implemented
 1. Create / Delete Tab
