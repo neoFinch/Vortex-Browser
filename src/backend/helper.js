@@ -1,5 +1,7 @@
 
 const { session } = require('electron');
+const { throttle } = require('lodash');
+
 
 function debounce(func, delay) {
   let timeoutId;
@@ -50,8 +52,24 @@ async function base64ToArrayBuffer(base64) {
     
 }
 
+
+let lastNavigationTime = 0;
+const THROTTLE_DELAY = 2000;
+
+const throttledNavigation = throttle((view, url) => {
+  const currentTime = Date.now();
+  if (currentTime - lastNavigationTime >= THROTTLE_DELAY) {
+    console.log(`Navigating to: ${url}`);
+    view.loadURL(url);
+    lastNavigationTime = currentTime;
+  } else {
+    console.log(`Navigation to ${url} throttled`);
+  }
+}, THROTTLE_DELAY, { leading: true, trailing: false });
+
 module.exports = {
   debounce,
   verifySessionStorage,
-  base64ToArrayBuffer
+  base64ToArrayBuffer,
+  throttledNavigation
 };

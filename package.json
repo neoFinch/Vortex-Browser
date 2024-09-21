@@ -1,7 +1,7 @@
 {
   "name": "vortex-browser",
   "productName": "vortex-browser",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An electron browser with a new look and feel",
   "main": "src/index.js",
   "scripts": {
@@ -31,7 +31,8 @@
   },
   "license": "MIT",
   "dependencies": {
+    "chalk": "^4.1.0",
     "electron-squirrel-startup": "^1.0.1",
-    "chalk": "^4.1.0"
+    "lodash": "^4.17.21"
   }
 }

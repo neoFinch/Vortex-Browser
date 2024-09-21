@@ -12,6 +12,9 @@
       <button onclick="goBack()"> <img class="deg-180" src="../../assets/forward.svg" alt="back"></button>
       <input autofocus type="text" id="urlBar" placeholder="Enter URL" onkeyup="navigate(event)">
       <button onclick="goForward()"> <img src="../../assets/forward.svg" alt="forward"> </button>
+      <div class="search-result" id="search-result-id">
+
+      </div>
     </div>
     <div class="buttons">
       <button id="newTab" class="action" onclick="createTab()">New Tab</button>
@@ -23,21 +26,41 @@
   </div>
 </body>
 <script>
-  function navigate(e) {
-    if (e.key === 'Enter') {
-      const url = document.getElementById('urlBar').value;
-      if (url.length > 0) {
-        if (url.startsWith('http')) {
-          window.electronAPI.navigate(url);
-        } else {
-          window.electronAPI.navigate('https://' + url);
-        }
+
+  console.log("OS ", window.electronAPI.getOS);
+
+  if (window.electronAPI.getOS === 'linux') {
+    document.querySelector('.drag-region').style.display = 'none';
+  }
+
+  function navigate(event) {
+
+
+
+    console.log('navigate', event.key)
+
+    if (event.key === 'Escape') {
+      document.querySelector('#search-result-id').style.display = 'none';
+      return;
+    }
+
+    window.electronAPI.getHistory();
+
+    if (event.key === 'Enter') {
+      const value = event.target.value;
+      console.log({ value });
+      if (validDomains.some((domain) => value.includes(domain))) {
+        console.log('inside', { value })
+        window.electronAPI.navigate(`https://${value}`);
+      } else {
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(value)}`;
+        window.electronAPI.navigate(searchUrl);
       }
     }
   }
 
   function createTab() {
-    window.electronAPI.createTab();
+    window.electronAPI.createTab('');
   }
 
   // In your sidebar JavaScript
@@ -54,10 +77,10 @@
     // Add new tabs
     tabs.forEach(tab => {
       const tabElement = document.createElement('div');
-      
+
       let spinner = document.createElement('div');
       spinner.classList.add('spinner');
-      
+
       tabElement.appendChild(spinner);
 
       if (tab.isLoading) {
@@ -77,7 +100,7 @@
 
       let deleteBtn = document.createElement('button');
       deleteBtn.textContent = 'X';
-      deleteBtn.onclick = (event) => closeTab(event,tab.id);
+      deleteBtn.onclick = (event) => closeTab(event, tab.id);
       tabElement.appendChild(deleteBtn);
       tabList.appendChild(tabElement);
       if (tab.id === activeTabId) {
@@ -93,7 +116,7 @@
     // document.getElementById('urlBar').value = tabs[activeTabId].url;
   }
 
-  function closeTab(event,id) {
+  function closeTab(event, id) {
     event.stopPropagation();
     window.electronAPI.closeTab(id);
   }
@@ -114,6 +137,54 @@
     console.log('focus called')
     document.getElementById('urlBar').focus()
   })
-  
+
+
+
+  window.electronAPI.onHistoryData((data) => {
+    // console.log('history data', data)
+    if (data.length === 0) {
+      document.querySelector('.search-result').style.display = 'none';
+      return;
+    }
+
+    let searchText = document.getElementById('urlBar').value;
+    let filteredData = data.filter(item => item.url.includes(searchText));
+
+    // console.log('filtered data', filteredData)
+
+    let searchItemsHTML = filteredData.slice(0, 10).map(item => `
+    <div class="search-result-item" onclick="window.electronAPI.navigate('${item.url}'); document.querySelector('.search-result').style.display = 'none';">
+      <span class="search-result-title">${item.url}</span>
+      <span class="search-result-url">${item.title}</span>
+    </div>
+  `).join('');
+
+    document.querySelector('.search-result').innerHTML = searchItemsHTML;
+    if (searchText === '' || filteredData.length === 0) {
+      document.querySelector('.search-result').style.display = 'none';
+    } else {
+      document.querySelector('.search-result').style.display = 'block';
+    }
+  });
+
+
+  const validDomains = [
+    'http',
+    'https',
+    'www',
+    '.com',
+    '.org',
+    '.net',
+    '.io',
+    '.gov',
+    '.edu',
+    '.co',
+    '.in',
+    ".me"
+  ];
+
+
+
 </script>
+
 </html>

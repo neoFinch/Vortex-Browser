@@ -10,10 +10,11 @@ const {
 } = require("electron");
 const path = require("path");
 const { debounce } = require("./backend/helper");
-const TabManager = require("./backend/TabManager");
+const TabManager = require("./backend/TabManager"); 
 const chalk = require("chalk");
 const fs = require('fs');
 const { sandboxed } = require("process");
+const { ipcRenderer } = require("electron/renderer");
 
 /**
  * @type {BaseWindow|null}
@@ -31,6 +32,7 @@ let currentBounds = {
 };
 
 let tabManager = new TabManager(currentBounds);
+let history
 
 function createWindow() {
   win = new BaseWindow({
@@ -282,7 +284,7 @@ function resizeViews() {
 
 console.log( chalk.bgBlueBright('User data path:', app.getPath('userData')));
 
-app.whenReady().then(() => {
+app.whenReady().then(() => { 
   createWindow();
   // add a child view that acts as find in page view
   let findInPageView = new WebContentsView({
@@ -303,13 +305,15 @@ app.whenReady().then(() => {
     height: currentBounds.height,
   });
 
-  findInPageView.setVisible(tabManager.isFindInPageViewVisible);
+  findInPageView.setVisible(tabManager.isFindInPageViewVisible); 
 
   win.contentView.addChildView(findInPageView);
   tabManager.setWin(win);
   tabManager.setSidebar(sidebar);
   Menu.setApplicationMenu(menu);
-});
+
+  ipcMain.emit('check-os')
+}); 
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
@@ -318,7 +322,7 @@ app.on("window-all-closed", () => {
 app.on("activate", () => {
   if (BaseWindow.getAllWindows().length === 0) createWindow();
 });
-
+ 
 /**
  * IPC EVENTS
  */
@@ -343,7 +347,7 @@ ipcMain.on("go-back", (event) => {
   console.log("go-back");
   tabManager.viewMap.get(tabManager.activeTabId)?.webContents?.goBack();
 });
-
+ 
 ipcMain.on("go-forward", (event) => {
   console.log("go-forward");
   tabManager.viewMap.get(tabManager.activeTabId)?.webContents?.goForward();
@@ -356,12 +360,13 @@ ipcMain.on("keyup-in-find-in-page", async (event, value) => {
     ?.webContents?.findInPage(value);
     
   tabManager.viewMap
-    .get(tabManager.activeTabId)
+    .get(tabManager.activeTabId) 
     ?.webContents?.on("found-in-page", (event, result) => {
       console.log("found in page", result);
     });
   // found in page
 });
+
 
 /***
  * When user clicks on the close button in find in page view
@@ -390,3 +395,12 @@ function logSessionData() {
       console.error('Failed to get cookies', error);
     });
 }
+
+ipcMain.on('get-history', (event) => {
+  console.log(chalk.bgYellow('get-history'), tabManager.historyManager)
+  event.reply('history-data', tabManager.historyManager.history);
+});
+
+ipcMain.on('clear-history', () => {
+  tabManager.historyManager.clearHistory();
+});

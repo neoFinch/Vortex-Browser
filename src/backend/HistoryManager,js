@@ -1,0 +1,78 @@
+const { ipcMain } = require("electron");
+const fs = require("fs");
+const path = require("path");
+
+class HistoryManager {
+
+  constructor(userDataPath) {
+    this.historyFilePath = path.join(userDataPath, "history.json");
+    this.history = this.loadHistory();
+
+    // Set up IPC listeners
+    ipcMain.on("add-to-history", (event, historyItem) => {
+      this.addToHistory(historyItem);
+    });
+
+    ipcMain.on("get-history", (event) => {
+      event.reply("history-data", this.getHistory());
+    });
+
+    ipcMain.on("clear-history", () => {
+      this.clearHistory();
+    });
+  }
+
+  loadHistory() {
+    try {
+      if (fs.existsSync(this.historyFilePath)) {
+        const data = fs.readFileSync(this.historyFilePath, "utf8");
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error("Error loading history:", error);
+    }
+    return [];
+  }
+
+  saveHistory() {
+    console.log("saving history", this.history);
+    try {
+      fs.writeFileSync(
+        this.historyFilePath,
+        JSON.stringify(this.history),
+        "utf8"
+      );
+    } catch (error) {
+      console.error("Error saving history:", error);
+    }
+  }
+
+  addToHistory(historyItem) {
+    if (historyItem.url == '') {
+        return;
+    }
+    if (historyItem.url.includes('src/components/new-tab/new-tab.html')) {
+        return;
+    }
+    let exists = this.history.find(item => item.url === historyItem.url)
+    if (exists) {
+      return;
+    }
+    this.history.unshift({
+      ...historyItem,
+      timestamp: Date.now(),
+    });
+    this.saveHistory();
+  }
+
+  getHistory() {
+    return this.history;
+  }
+
+  clearHistory() {
+    this.history = [];
+    this.saveHistory();
+  }
+}
+
+module.exports = HistoryManager;
